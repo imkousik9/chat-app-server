@@ -10,9 +10,8 @@ Frontend Code -> [https://github.com/imkousik9/chat-app](https://github.com/imko
 <br>
 Backend Code -> [https://github.com/imkousik9/chat-app-server](https://github.com/imkousik9/chat-app-server)
 <br>
-Deployed URL -> [https://keen-nightingale-5e12fb.netlify.app](https://keen-nightingale-5e12fb.netlify.app)
+Deployed URL -> [https://vibrant-almeida-582a17.netlify.app](https://vibrant-almeida-582a17.netlify.app)
 <br>
-API Docs -> https://chat-kousik-server.herokuapp.com/graphql
 
 **Run the site locally**
 

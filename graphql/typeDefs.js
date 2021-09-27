@@ -21,16 +21,26 @@ const typeDefs = gql`
     name: String
   }
 
+  type FieldError {
+    field: String
+    message: String
+  }
+
+  type UserResponse {
+    errors: [FieldError]
+    user: User
+  }
+
   type Query {
-    user: User!
+    user: User
     room(id: ID): Room
     rooms: [Room]
     messages(id: ID): [Message!]
   }
 
   type Mutation {
-    register(name: String!, email: String!, password: String!): User!
-    login(email: String!, password: String!): User!
+    register(name: String!, email: String!, password: String!): UserResponse
+    login(email: String!, password: String!): UserResponse
     createRoom(name: String!): Room!
     deleteRoom(id: ID!): Room!
     sendMessage(message: String, roomId: ID): Message!

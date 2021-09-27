@@ -2,22 +2,21 @@ const { PubSub } = require('graphql-subscriptions');
 const Message = require('../../models/Message');
 const Room = require('../../models/Room');
 const User = require('../../models/User');
-
 const checkAuth = require('../../util/auth');
 
 const pubsub = new PubSub();
 
 module.exports = {
   Query: {
-    messages: async (_, args) => {
+    async messages(_, args) {
       return await Message.find({ room: args.id }).sort({ timestamp: -1 });
     }
   },
 
   Mutation: {
-    sendMessage: async (_, args, context) => {
+    async sendMessage(_, args, context) {
       const user = checkAuth(context);
-      const message = Message.create({
+      const message = await Message.create({
         message: args.message,
         user: user.id,
         room: args.roomId

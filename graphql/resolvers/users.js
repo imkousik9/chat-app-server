@@ -1,15 +1,13 @@
-const { UserInputError } = require('apollo-server-express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../../models/User');
 const checkAuth = require('../../util/auth');
+const { validateRegister } = require('../../util/validateRegister');
 
 function generateToken(user) {
   return jwt.sign(
     {
-      id: user.id,
-      email: user.email,
-      name: user.name
+      id: user.id
     },
     process.env.SECRET_KEY,
     { expiresIn: '1h' }
@@ -21,8 +19,8 @@ module.exports = {
     async user(_, args, context) {
       try {
         const authUser = checkAuth(context);
-        const user = await User.findById(authUser.id);
-        return user;
+
+        return await User.findById(authUser.id);
       } catch (err) {
         throw new Error(err);
       }
@@ -34,52 +32,69 @@ module.exports = {
       const user = await User.findOne({ email });
 
       if (!user) {
-        errors.general = 'User not found';
-        throw new UserInputError('User not found', { errors });
+        return {
+          errors: [
+            {
+              field: 'email',
+              message: "this email doesn't exist"
+            }
+          ]
+        };
       }
 
       const match = await bcrypt.compare(password, user.password);
+
       if (!match) {
-        errors.general = 'Wrong crendetials';
-        throw new UserInputError('Wrong crendetials', { errors });
+        return {
+          errors: [
+            {
+              field: 'password',
+              message: 'incorrect password'
+            }
+          ]
+        };
       }
 
       const token = generateToken(user);
 
       return {
-        ...user._doc,
-        id: user._id,
-        token
+        user: { ...user._doc, id: user._id, token }
       };
     },
 
     async register(_, { name, email, password }) {
       const user = await User.findOne({ email });
+
+      const errors = validateRegister(email, name, password);
+
       if (user) {
-        throw new UserInputError('Username is taken', {
-          errors: {
-            username: 'This username is taken'
-          }
-        });
+        return {
+          errors: [
+            {
+              field: 'email',
+              message: 'email already taken'
+            }
+          ]
+        };
       }
-      // hash password and create an auth token
+
+      if (errors) {
+        return {
+          errors
+        };
+      }
+
       password = await bcrypt.hash(password, 12);
 
-      const newUser = new User({
+      const newUser = await User.create({
         email,
         name,
         password
       });
 
-      const res = await newUser.save();
+      const token = generateToken(newUser);
 
-      const token = generateToken(res);
-
-      return {
-        ...res._doc,
-        id: res._id,
-        token
-      };
+      return { user: { ...newUser._doc, id: newUser._id, token } };
     }
   }
 };
