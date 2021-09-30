@@ -10,7 +10,7 @@ function generateToken(user) {
       id: user.id
     },
     process.env.SECRET_KEY,
-    { expiresIn: '1h' }
+    { expiresIn: process.env.EXPIRES_IN }
   );
 }
 
@@ -35,8 +35,8 @@ module.exports = {
         return {
           errors: [
             {
-              field: 'email',
-              message: "this email doesn't exist"
+              field: 'email or password',
+              message: 'incorrect email or password'
             }
           ]
         };
@@ -48,8 +48,8 @@ module.exports = {
         return {
           errors: [
             {
-              field: 'password',
-              message: 'incorrect password'
+              field: 'email or password',
+              message: 'incorrect email or password'
             }
           ]
         };

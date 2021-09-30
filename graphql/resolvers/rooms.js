@@ -1,6 +1,9 @@
+const { UserInputError } = require('apollo-server-errors');
 const { PubSub } = require('graphql-subscriptions');
 const Room = require('../../models/Room');
 const Message = require('../../models/Message');
+const checkAuth = require('../../util/auth');
+const User = require('../../models/User');
 
 const pubsub = new PubSub();
 
@@ -31,7 +34,8 @@ module.exports = {
   },
 
   Mutation: {
-    async createRoom(_, { name }) {
+    async createRoom(_, { name }, context) {
+      const user = checkAuth(context);
       const oldRoom = await Room.findOne({ name });
 
       if (oldRoom) {
@@ -41,8 +45,8 @@ module.exports = {
           }
         });
       }
+      const room = await Room.create({ name, user: user.id });
 
-      const room = await Room.create({ name });
       pubsub.publish('NEW_ROOM', { newRoom: room });
 
       return {
@@ -51,8 +55,9 @@ module.exports = {
       };
     },
 
-    async deleteRoom(_, { id }) {
-      const room = await Room.findByIdAndDelete(id);
+    async deleteRoom(_, { id }, context) {
+      const user = checkAuth(context);
+      const room = await Room.findById(id);
 
       if (!room) {
         throw new UserInputError('Room not found', {
@@ -60,13 +65,24 @@ module.exports = {
             room: 'This room not found'
           }
         });
+      } else if (room.user.toString() === user.id) {
+        const room = await Room.findByIdAndDelete(id);
+        await Message.deleteMany({ room: id });
+        pubsub.publish('DELETE_ROOM', { deleteRoom: room });
+        return room;
+      } else {
+        throw new UserInputError('Authorization', {
+          errors: {
+            room: 'You are not Authorization for delete this room'
+          }
+        });
       }
+    }
+  },
 
-      await Message.deleteMany({ room: id });
-
-      pubsub.publish('DELETE_ROOM', { deleteRoom: room });
-
-      return room;
+  Room: {
+    async user(parent) {
+      return await User.findById(parent.user);
     }
   },
 

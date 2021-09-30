@@ -19,6 +19,7 @@ const typeDefs = gql`
   type Room {
     id: ID
     name: String
+    user: User
   }
 
   type FieldError {

@@ -22,5 +22,9 @@ module.exports = {
 
   Message: {
     ...messagesResolvers.Message
+  },
+
+  Room: {
+    ...roomsResolvers.Room
   }
 };
